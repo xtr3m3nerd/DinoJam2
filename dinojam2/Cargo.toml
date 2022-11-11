@@ -1,0 +1,64 @@
+[package]
+name = "dinojam2"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+[[bin]]
+name = "dinojam2-desktop"
+path = "src/desktop_main.rs"
+
+[features]
+native = []
+
+[dev-dependencies]
+bevy = { version = "0.8.0", features = ["dynamic"] }
+
+[dependencies]
+bevy = "0.8.0"
+wasm-bindgen = "0.2"
+rand = "0.8.5"
+
+# Optional Dependencies
+#bevy_tweening = "0.5"
+#bevy_ninepatch = "0.8"
+#iyes_loopless = "0.7"
+
+[dependencies.bevy_kira_audio]
+version = "0.12"
+default-features = false
+features = ["ogg", "wav"]
+
+# Native dependencies
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+bevy-inspector-egui = "0.12"
+
+# Wasm dependencies
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+# Dump panics into browser console
+console_error_panic_hook = "0.1"
+# Used for resizing the canvas to fit the window
+web-sys = { version = "0.3", features = ["Window"] }
+gloo-events = "0.1"
+
+# [target.wasm32-unknown-unknown]
+# runner = "wasm-server-runner"
+
+# https://github.com/bevyengine/bevy/tree/latest/examples#platform-specific-examples
+
+# ANDROID
+
+# To test android dev run below
+# cargo apk run --example android_example
+
+# To setup android dev uncomment below
+# [package.metadata.android]
+# build_targets = ["aarch64-linux-android", "armv7-linux-androideabi"]
+#
+# [package.metadata.android.sdk]
+# target_sdk_version = 31
+
+# IOS
