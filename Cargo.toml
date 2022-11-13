@@ -1,6 +1,7 @@
 [workspace]
 members = [
 "dinojam2",
+"shared",
 ]
 resolver = "2" # Important! wgpu/Bevy needs this!
 
