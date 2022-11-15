@@ -31,13 +31,16 @@ args = ['build', '--features', 'native', '@@split(CARGO_RELEASE_ARGS, )']
 [tasks.collect-native-assets]
 script_runner = '@duckscript'
 script = '''
-echo "copy to ${CARGO_TARGET_DIR}/${ENV_DIR}"
-pwd
+rm -r ${CARGO_TARGET_DIR}/${ENV_DIR}/assets
 cp ${PROJECT_NAME}/assets ${CARGO_TARGET_DIR}/${ENV_DIR}/
 '''
 
 [tasks.run]
 command = '${CARGO_TARGET_DIR}/${ENV_DIR}/${PROJECT_NAME}-desktop'
+dependencies = ['build-native', 'collect-native-assets']
+
+[tasks.run-server]
+command = '${CARGO_TARGET_DIR}/${ENV_DIR}/${PROJECT_NAME}-server'
 dependencies = ['build-native', 'collect-native-assets']
 
 [tasks.serve]
@@ -48,6 +51,7 @@ dependencies = ['distrib-web', 'install-basic-http-server']
 
 [tasks.test]
 disabled = true
+
 
 
 ####################################

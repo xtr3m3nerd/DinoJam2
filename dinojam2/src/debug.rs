@@ -1,9 +1,5 @@
 use bevy::{
-    diagnostic::{
-        Diagnostics,
-        FrameTimeDiagnosticsPlugin,
-        LogDiagnosticsPlugin,
-    },
+    diagnostic::{Diagnostics, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     prelude::*,
 };
 
@@ -56,7 +52,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 },
                 ..default()
             }),
-    )
+        )
         .insert(FpsText)
         .insert(Debug)
         .insert(UiFixedZ { z: 101.0 });

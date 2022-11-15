@@ -2,6 +2,14 @@ use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
 use std::collections::HashMap;
 
+pub mod asset_management;
+pub mod hex;
+
+// Only clients that can provide the same PROTOCOL_ID that the server is using will be able to
+// connect. This can be used to make sure players use the most recent version of the client for
+// instance.
+pub const PROTOCOL_ID: u64 = 1208;
+
 const MAP_WIDTH: usize = 8;
 const MAP_HEIGHT: usize = 8;
 const MAP_SIZE: usize = MAP_WIDTH * MAP_HEIGHT;
@@ -89,13 +97,32 @@ pub struct Unit {
 /// An event that progresses the GameState forward
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum GameEvent {
-    BeginGame { goes_first: PlayerId },
-    EndGame { reason: EndGameReason },
-    PlayerJoined { player_id: PlayerId, name: String },
-    PlayerDisconnected { player_id: PlayerId },
-    BuildUnit { player_id: PlayerId, at: usize, unit: Unit },
-    MoveUnit { player_id: PlayerId, at: usize, unit: Unit },
-    EndTurn { player_id: PlayerId },
+    BeginGame {
+        goes_first: PlayerId,
+    },
+    EndGame {
+        reason: EndGameReason,
+    },
+    PlayerJoined {
+        player_id: PlayerId,
+        name: String,
+    },
+    PlayerDisconnected {
+        player_id: PlayerId,
+    },
+    BuildUnit {
+        player_id: PlayerId,
+        at: usize,
+        unit: Unit,
+    },
+    MoveUnit {
+        player_id: PlayerId,
+        at: usize,
+        unit: Unit,
+    },
+    EndTurn {
+        player_id: PlayerId,
+    },
 }
 
 /// Possible states that a position in the board can be in
@@ -111,7 +138,7 @@ pub enum Tile {
 pub struct GameState {
     pub stage: Stage,
     #[serde(with = "BigArray")]
-    pub board: [ BoardTile; MAP_SIZE ],
+    pub board: [BoardTile; MAP_SIZE],
     pub active_player_id: PlayerId,
     pub players: HashMap<PlayerId, Player>,
     pub histroy: Vec<GameEvent>,
@@ -121,7 +148,7 @@ impl Default for GameState {
     fn default() -> Self {
         Self {
             stage: Stage::PreGame,
-            board: [ BoardTile::default(); MAP_SIZE ],
+            board: [BoardTile::default(); MAP_SIZE],
             active_player_id: 0,
             players: HashMap::new(),
             histroy: Vec::new(),
@@ -165,8 +192,12 @@ impl GameState {
                 if !self.players.contains_key(player_id) {
                     return false;
                 }
-            },
-            BuildUnit { player_id, at, unit: _ } => {
+            }
+            BuildUnit {
+                player_id,
+                at,
+                unit: _,
+            } => {
                 // Check that player exists
                 if !self.players.contains_key(player_id) {
                     return false;
@@ -182,7 +213,6 @@ impl GameState {
                     return false;
                 }
 
-
                 // Check that the player is not trying to place a piece on top of existing peice
                 if self.board[*at].terrain != TerrainTile::Empty {
                     return false;
@@ -190,8 +220,12 @@ impl GameState {
 
                 // TODO validate that the placement was a valid move for the unit
                 // TODO validate that player could afford to build unit
-            },
-            MoveUnit { player_id, at, unit: _ } => {
+            }
+            MoveUnit {
+                player_id,
+                at,
+                unit: _,
+            } => {
                 // Check that player exists
                 if !self.players.contains_key(player_id) {
                     return false;
@@ -214,7 +248,7 @@ impl GameState {
 
                 // TODO validate that the move was a valid move for the unit
                 // TODO validate that unit hasnt already taken action for this turn
-            },
+            }
             EndTurn { player_id } => {
                 // Check that player exists
                 if !self.players.contains_key(player_id) {
@@ -225,7 +259,7 @@ impl GameState {
                 if self.active_player_id != *player_id {
                     return false;
                 }
-            },
+            }
         }
 
         // We couldnt find anything wrong so must be good
@@ -260,14 +294,22 @@ impl GameState {
             PlayerDisconnected { player_id } => {
                 self.players.remove(player_id);
             }
-            BuildUnit { player_id: _, at: _, unit: _ } => {
+            BuildUnit {
+                player_id: _,
+                at: _,
+                unit: _,
+            } => {
                 // TODO impliment actual build logic
                 //let piece = self.get_player_faction(player_id);
-            },
-            MoveUnit { player_id: _, at: _, unit: _ } => {
+            }
+            MoveUnit {
+                player_id: _,
+                at: _,
+                unit: _,
+            } => {
                 // TODO impliment actual move logic
                 // let piece = self.get_player_faction(player_id);
-            },
+            }
             EndTurn { player_id } => {
                 // Switch which player is the active player
                 self.active_player_id = self
@@ -276,7 +318,7 @@ impl GameState {
                     .find(|id| *id != player_id)
                     .unwrap()
                     .clone();
-                },
+            }
         }
 
         self.histroy.push(valid_event.clone());
@@ -284,20 +326,21 @@ impl GameState {
 
     /// Determines if someone has won the game
     pub fn determine_winner(&self) -> Option<PlayerId> {
-
         if self.volcano_has_been_plugged() {
-            if let Some((dinosaur_player, _)) = self.players
+            if let Some((dinosaur_player, _)) = self
+                .players
                 .iter()
-                    .find(|(_, player)| player.faction == Faction::Dinosaur)
+                .find(|(_, player)| player.faction == Faction::Dinosaur)
             {
                 return Some(*dinosaur_player);
             }
         }
 
-        if self.all_dino_dead() && self.all_dino_villages_destroyed()  {
-            if let Some((volcano_player, _)) = self.players
+        if self.all_dino_dead() && self.all_dino_villages_destroyed() {
+            if let Some((volcano_player, _)) = self
+                .players
                 .iter()
-                    .find(|(_, player)| player.faction == Faction::Volcano)
+                .find(|(_, player)| player.faction == Faction::Volcano)
             {
                 return Some(*volcano_player);
             }

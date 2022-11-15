@@ -1,18 +1,14 @@
-use bevy::prelude::*;
 use bevy::asset::Asset;
+use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 use bevy_common_assets::toml::TomlAssetPlugin;
 
 use iyes_loopless::prelude::*;
 use iyes_progress::prelude::*;
 
+use crate::asset_management::{asset_collections::*, HandleFromPath};
 use crate::states::AppState;
-use crate::asset_management::{
-    asset_collections::*,
-    terrain_descriptors::*,
-    unit_descriptors::*,
-    HandleFromPath,
-};
+use shared::asset_management::{terrain_descriptors::*, unit_descriptors::*};
 
 pub struct AssetLoaderPlugin;
 
@@ -41,14 +37,17 @@ impl Plugin for AssetLoaderPlugin {
                 .with_collection::<TerrainAssets>()
                 //.with_collection::<CutsceneAssets>()
                 .with_collection::<MapAssets>(),
-                //.with_collection::<AudioAssets>(),
+            //.with_collection::<AudioAssets>(),
         );
         app.add_plugin(TomlAssetPlugin::<UnitAsset>::new(&["units.toml"]));
         app.add_plugin(TomlAssetPlugin::<TerrainAsset>::new(&["terrain.toml"]));
         // app.add_plugin(TomlAssetPlugin::<CutsceneMetaAsset>::new(&[
         //     "cutscene.toml",
         // ]));
-        app.add_system_to_stage(CoreStage::Last, debug_progress.run_in_state(AppState::AssetsLoading));
+        app.add_system_to_stage(
+            CoreStage::Last,
+            debug_progress.run_in_state(AppState::AssetsLoading),
+        );
         app.add_enter_system(AppState::InGame, debug_units);
         app.add_startup_system(enable_hot_reloading);
 

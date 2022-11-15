@@ -1,4 +1,4 @@
-use bevy::reflect::{ Reflect, FromReflect };
+use bevy::reflect::{FromReflect, Reflect};
 
 #[derive(
     Clone, Copy, Debug, Eq, Hash, PartialEq, Default, Reflect, FromReflect, serde::Deserialize,

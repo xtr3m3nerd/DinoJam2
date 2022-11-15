@@ -1,8 +1,8 @@
-use bevy::prelude::*;
-use bevy::window::close_on_esc;
-use bevy::app::AppExit;
 use crate::states::AppState;
 use crate::util;
+use bevy::app::AppExit;
+use bevy::prelude::*;
+use bevy::window::close_on_esc;
 use iyes_loopless::prelude::*;
 
 pub struct MainMenuScenePlugin;
@@ -17,13 +17,13 @@ impl Plugin for MainMenuScenePlugin {
         // menu stuff
         app.add_system_set(
             ConditionSet::new()
-            .run_in_state(AppState::MainMenu)
-            .with_system(close_on_esc)
-            .with_system(butt_interact_visual)
-            // our menu button handlers
-            .with_system(butt_exit.run_if(on_butt_interact::<ExitButt>))
-            .with_system(butt_game.run_if(on_butt_interact::<EnterButt>))
-            .into()
+                .run_in_state(AppState::MainMenu)
+                .with_system(close_on_esc)
+                .with_system(butt_interact_visual)
+                // our menu button handlers
+                .with_system(butt_exit.run_if(on_butt_interact::<ExitButt>))
+                .with_system(butt_game.run_if(on_butt_interact::<EnterButt>))
+                .into(),
         );
     }
 }
@@ -115,7 +115,7 @@ fn setup_menu(mut commands: Commands, ass: Res<AssetServer>) {
             },
             ..Default::default()
         })
-    .insert(MainMenu)
+        .insert(MainMenu)
         .id();
 
     let butt_enter = commands
@@ -123,13 +123,13 @@ fn setup_menu(mut commands: Commands, ass: Res<AssetServer>) {
             style: butt_style.clone(),
             ..Default::default()
         })
-    .with_children(|btn| {
-        btn.spawn_bundle(TextBundle {
-            text: Text::from_section("Enter Game", butt_textstyle.clone()),
-            ..Default::default()
-        });
-    })
-    .insert(EnterButt)
+        .with_children(|btn| {
+            btn.spawn_bundle(TextBundle {
+                text: Text::from_section("Enter Game", butt_textstyle.clone()),
+                ..Default::default()
+            });
+        })
+        .insert(EnterButt)
         .id();
 
     let butt_exit = commands
@@ -137,13 +137,13 @@ fn setup_menu(mut commands: Commands, ass: Res<AssetServer>) {
             style: butt_style.clone(),
             ..Default::default()
         })
-    .with_children(|btn| {
-        btn.spawn_bundle(TextBundle {
-            text: Text::from_section("Exit Game", butt_textstyle.clone()),
-            ..Default::default()
-        });
-    })
-    .insert(ExitButt)
+        .with_children(|btn| {
+            btn.spawn_bundle(TextBundle {
+                text: Text::from_section("Exit Game", butt_textstyle.clone()),
+                ..Default::default()
+            });
+        })
+        .insert(ExitButt)
         .id();
 
     commands

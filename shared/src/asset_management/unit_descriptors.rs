@@ -63,4 +63,3 @@ impl FromWorld for UnitMarker {
         UnitMarker
     }
 }
-

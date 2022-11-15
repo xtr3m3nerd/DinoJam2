@@ -22,18 +22,18 @@ impl Plugin for GameScenePlugin {
         // in-game stuff
         app.add_system_set(
             ConditionSet::new()
-            .run_in_state(AppState::InGame)
-            .with_system(back_to_menu_on_esc)
-            .with_system(clear_on_del)
-            .with_system(spin_sprites.run_if_not(spacebar_pressed))
-            .into()
+                .run_in_state(AppState::InGame)
+                .with_system(back_to_menu_on_esc)
+                .with_system(clear_on_del)
+                .with_system(spin_sprites.run_if_not(spacebar_pressed))
+                .into(),
         );
         app.add_system(
             spawn_sprite
-            // only in-game!
-            .run_in_state(AppState::InGame)
-            // only while the spacebar is pressed
-            .run_if(spacebar_pressed)
+                // only in-game!
+                .run_in_state(AppState::InGame)
+                // only while the spacebar is pressed
+                .run_if(spacebar_pressed),
         );
         // app.add_fixed_timestep_system(
         //     "my_fixed_update", 0,
@@ -69,7 +69,6 @@ fn spacebar_pressed(kbd: Res<Input<KeyCode>>) -> bool {
     kbd.pressed(KeyCode::Space)
 }
 
-
 /// Spawn a MySprite entity
 fn spawn_sprite(mut commands: Commands) {
     let mut rng = thread_rng();
@@ -81,13 +80,13 @@ fn spawn_sprite(mut commands: Commands) {
                 ..Default::default()
             },
             transform: Transform::from_xyz(
-                           rng.gen_range(-420.0..420.0),
-                           rng.gen_range(-420.0..420.0),
-                           rng.gen_range(0.0..100.0),
-                       ),
-                       ..Default::default()
+                rng.gen_range(-420.0..420.0),
+                rng.gen_range(-420.0..420.0),
+                rng.gen_range(0.0..100.0),
+            ),
+            ..Default::default()
         })
-    .insert(MySprite);
+        .insert(MySprite);
 }
 
 /// Rotate all the sprites
@@ -96,4 +95,3 @@ fn spin_sprites(mut q: Query<&mut Transform, With<MySprite>>, t: Res<Time>) {
         transform.rotate(Quat::from_rotation_z(1.0 * t.delta_seconds()));
     }
 }
-

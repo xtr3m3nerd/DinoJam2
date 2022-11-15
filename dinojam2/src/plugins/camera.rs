@@ -14,5 +14,7 @@ struct GameCamera;
 
 /// Spawn the camera
 fn setup_camera(mut commands: Commands) {
-    commands.spawn_bundle(Camera2dBundle::default()).insert(GameCamera);
+    commands
+        .spawn_bundle(Camera2dBundle::default())
+        .insert(GameCamera);
 }

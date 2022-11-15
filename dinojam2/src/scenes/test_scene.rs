@@ -3,8 +3,8 @@
 //! It displays the current FPS in the top left corner, as well as text that changes color
 //! in the bottom right. For text within a scene, please see the text2d example.
 
-use bevy::prelude::*;
 use crate::config::*;
+use bevy::prelude::*;
 
 pub struct TestScenePlugin;
 
@@ -34,23 +34,24 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             color: Color::NONE.into(),
             ..default()
         })
-    .with_children(|parent| {
-        parent.spawn_bundle(
-            TextBundle::from_section(
-                "Hello Bevy!",
-                TextStyle {
-                    font: asset_server.load(DEFAULT_FONT),
-                    font_size: 150.0,
-                    color: Color::ORANGE,
-                },
-            )
-            .with_text_alignment(TextAlignment::CENTER)
-            .with_style(Style {
-                align_self: AlignSelf::Center,
-                ..default()
-            })
-        )
-            .insert(ColorText);
+        .with_children(|parent| {
+            parent
+                .spawn_bundle(
+                    TextBundle::from_section(
+                        "Hello Bevy!",
+                        TextStyle {
+                            font: asset_server.load(DEFAULT_FONT),
+                            font_size: 150.0,
+                            color: Color::ORANGE,
+                        },
+                    )
+                    .with_text_alignment(TextAlignment::CENTER)
+                    .with_style(Style {
+                        align_self: AlignSelf::Center,
+                        ..default()
+                    }),
+                )
+                .insert(ColorText);
         });
 }
 
@@ -67,4 +68,3 @@ fn text_color_system(time: Res<Time>, mut query: Query<&mut Text, With<ColorText
         };
     }
 }
-

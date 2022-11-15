@@ -1,12 +1,10 @@
 use std::marker::PhantomData;
 
-use bevy::prelude::*;
 use bevy::asset::Asset;
-use bevy::reflect::{ Reflect, FromReflect };
+use bevy::prelude::*;
+use bevy::reflect::{FromReflect, Reflect};
 
 pub mod asset_collections;
-pub mod terrain_descriptors;
-pub mod unit_descriptors;
 
 /// This can be added to things to be loaded from scenes
 /// (bevy cannot handle handles in scenes yet ;) )

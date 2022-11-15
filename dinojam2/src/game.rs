@@ -1,22 +1,11 @@
-use bevy::{
-    prelude::*,
-    //render::texture::ImageSettings,
-    //sprite::Material2dPlugin,
-};
+use bevy::prelude::*;
 use bevy_ecs_tilemap::TilemapPlugin;
 use bevy_kira_audio::AudioPlugin;
 //use leafwing_input_manager::prelude::*;
 use iyes_loopless::prelude::*;
 use iyes_progress::prelude::*;
 
-use crate::{
-    config::*,
-    states::AppState,
-    debug::DebugPlugin,
-    scenes,
-    plugins,
-    util,
-};
+use crate::{config::*, debug::DebugPlugin, plugins, scenes, states::AppState, util};
 
 pub fn run(app: &mut App) {
     app.insert_resource(WindowDescriptor {
