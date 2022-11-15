@@ -1,0 +1,8 @@
+({
+    "meta.units": Files (
+        paths: ["units/test.units.toml"],
+    ),
+    "meta.terrain": Files (
+        paths: ["terrain/test.terrain.toml"],
+    ),
+})

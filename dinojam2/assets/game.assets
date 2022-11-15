@@ -1,0 +1,15 @@
+({
+    "image.select": File (
+        path: "images/tiles/bw-tile-hex-row.png",
+    ),
+    "image.terrain": File (
+        path: "images/tiles/hex_group.png",
+    ),
+    "image.units": TextureAtlas (
+        path: "images/units/units.png",
+        tile_size_x: 32.,
+        tile_size_y: 32.,
+        columns: 4,
+        rows: 3,
+    ),
+})

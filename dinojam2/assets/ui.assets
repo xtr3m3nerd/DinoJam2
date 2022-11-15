@@ -1,0 +1,11 @@
+({
+    "font.regular": File (
+        path: "fonts/Roboto-Medium.ttf",
+    ),
+    "font.bold": File (
+        path: "fonts/Roboto-Bold.ttf",
+    ),
+    "font.light": File (
+        path: "fonts/Roboto-Light.ttf",
+    ),
+})

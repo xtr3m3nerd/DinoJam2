@@ -1,0 +1,14 @@
+[[terrain]]
+name = "Land"
+sprite_idx = 0
+wall = false
+
+[[terrain]]
+name = "Water"
+sprite_idx = 1
+wall = true
+
+[[terrain]]
+name = "Lava"
+sprite_idx = 2
+wall = true
