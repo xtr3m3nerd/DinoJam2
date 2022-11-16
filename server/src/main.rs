@@ -86,6 +86,9 @@ fn server_update_system(
     mut server_events: EventReader<ServerEvent>,
     mut server: ResMut<RenetServer>,
     mut game_state: ResMut<shared::GameState>,
+    buildings: Res<shared::buildings::Buildings>,
+    units: Res<shared::units::Units>,
+    terrain: Res<shared::terrain::Terrain>,
 ) {
     for event in server_events.iter() {
         match event {
@@ -105,7 +108,7 @@ fn server_update_system(
                     name: name_from_user_data(&user_data),
                 };
 
-                game_state.consume(&event);
+                game_state.consume(&event, &buildings, &units, &terrain);
 
                 //Tell all playes that a new player has joined
                 server.broadcast_message(0, bincode::serialize(&event).unwrap());
@@ -115,14 +118,14 @@ fn server_update_system(
                 // Game can start once two players have joined
                 if game_state.players.len() == 2 {
                     let event = shared::GameEvent::BeginGame { goes_first: *id };
-                    game_state.consume(&event);
+                    game_state.consume(&event, &buildings, &units, &terrain);
                     server.broadcast_message(0, bincode::serialize(&event).unwrap());
                     trace!("The game has begun");
                 }
             }
             ServerEvent::ClientDisconnected(id) => {
                 let event = shared::GameEvent::PlayerDisconnected { player_id: *id };
-                game_state.consume(&event);
+                game_state.consume(&event, &buildings, &units, &terrain);
                 server.broadcast_message(0, bincode::serialize(&event).unwrap());
                 info!("Client {} disconnected.", id);
 
@@ -130,7 +133,7 @@ fn server_update_system(
                 let event = shared::GameEvent::EndGame {
                     reason: shared::EndGameReason::PlayerLeft { player_id: *id },
                 };
-                game_state.consume(&event);
+                game_state.consume(&event, &buildings, &units, &terrain);
 
                 server.broadcast_message(0, bincode::serialize(&event).unwrap());
 
@@ -145,8 +148,8 @@ fn server_update_system(
     for client_id in server.clients_id().into_iter() {
         while let Some(message) = server.receive_message(client_id, 0) {
             if let Ok(event) = bincode::deserialize::<shared::GameEvent>(&message) {
-                if game_state.validate(&event) {
-                    game_state.consume(&event);
+                if game_state.validate(&event, &buildings, &units, &terrain) {
+                    game_state.consume(&event, &buildings, &units, &terrain);
                     trace!("Player {} sent:\n\t{:#?}", client_id, event);
                     server.broadcast_message(0, bincode::serialize(&event).unwrap());
 

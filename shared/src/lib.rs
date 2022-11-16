@@ -1,9 +1,17 @@
+use std::fmt;
 use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
 use std::collections::HashMap;
 
 pub mod asset_management;
 pub mod hex;
+pub mod buildings;
+pub mod units;
+pub mod terrain;
+
+use crate::buildings::*;
+use crate::units::*;
+use crate::terrain::*;
 
 // Only clients that can provide the same PROTOCOL_ID that the server is using will be able to
 // connect. This can be used to make sure players use the most recent version of the client for
@@ -20,26 +28,19 @@ type PlayerId = u64;
 /// Struct for board positional related data.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct BoardTile {
-    pub terrain: TerrainTile,
+    pub terrain: TerrainKind,
     pub unit: Option<Unit>,
+    pub building: Option<Building>,
 }
 
 impl Default for BoardTile {
     fn default() -> Self {
         Self {
-            terrain: TerrainTile::Empty,
+            terrain: TerrainKind(0),
             unit: None,
+            building: None,
         }
     }
-}
-
-/// Possible states that a terrain position in the board can be in
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum TerrainTile {
-    Empty,
-    Land,
-    Water,
-    Lava,
 }
 
 /// Different factions that a player can play
@@ -49,11 +50,21 @@ pub enum Faction {
     Dinosaur,
 }
 
+impl fmt::Display for Faction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Faction::Volcano => write!(f, "Volcano"),
+            Faction::Dinosaur => write!(f, "Dinosaur"),
+        }
+    }
+}
+
 /// Struct for storing player related data.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Player {
     pub name: String,
     pub faction: Faction,
+    pub gold: u32,
 }
 
 /// The different states a game can be in. (not to be confused with the entire "GameState")
@@ -69,29 +80,6 @@ pub enum Stage {
 pub enum EndGameReason {
     PlayerLeft { player_id: PlayerId },
     PlayerWon { winner: PlayerId },
-}
-
-/// Different unit types
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum UnitType {
-    Lava,
-    LavaGolem,
-    VolcanoRocks,
-    DinoFighter,
-    DinoRanged,
-    DinoScout,
-}
-
-/// Different unit types
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub struct Unit {
-    pub unit_type: UnitType,
-    pub max_hp: u32,
-    pub cur_hp: u32,
-    pub move_range: u32,
-    pub range_remaining: u32,
-    pub attack_range: u32,
-    pub damage: u32,
 }
 
 /// An event that progresses the GameState forward
@@ -113,24 +101,16 @@ pub enum GameEvent {
     BuildUnit {
         player_id: PlayerId,
         at: usize,
-        unit: Unit,
+        unit_kind: UnitKind,
     },
     MoveUnit {
         player_id: PlayerId,
-        at: usize,
-        unit: Unit,
+        from: usize,
+        to: usize,
     },
     EndTurn {
         player_id: PlayerId,
     },
-}
-
-/// Possible states that a position in the board can be in
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum Tile {
-    Empty,
-    Tic,
-    Tac,
 }
 
 /// A GameState object that is able to keep track of a game
@@ -156,9 +136,21 @@ impl Default for GameState {
     }
 }
 
+pub struct Descriptors {
+    pub units: Units,
+    pub terrain: Terrain,
+    pub buildings: Buildings,
+}
+
 impl GameState {
     /// Determins where an event is valid considering the current GameState
-    pub fn validate(&self, event: &GameEvent) -> bool {
+    pub fn validate(
+        &self,
+        event: &GameEvent,
+        buildings: &Buildings,
+        units: &Units,
+        terrain: &Terrain,
+    ) -> bool {
         use GameEvent::*;
         match event {
             BeginGame { goes_first } => {
@@ -196,7 +188,7 @@ impl GameState {
             BuildUnit {
                 player_id,
                 at,
-                unit: _,
+                unit_kind,
             } => {
                 // Check that player exists
                 if !self.players.contains_key(player_id) {
@@ -213,18 +205,42 @@ impl GameState {
                     return false;
                 }
 
-                // Check that the player is not trying to place a piece on top of existing peice
-                if self.board[*at].terrain != TerrainTile::Empty {
+                let player = self.players.get(player_id).unwrap();
+                let board_tile = self.board[*at];
+
+                // Check that there is a building at the location that is the player's faction
+                if let Some(building) = board_tile.building {
+                    let building_descriptor = buildings[building.kind].clone();
+                    if building_descriptor.faction != player.faction.to_string() {
+                        return false;
+                    }
+                } else {
+                    // There is no building to build unit from
                     return false;
                 }
 
-                // TODO validate that the placement was a valid move for the unit
-                // TODO validate that player could afford to build unit
+                // Check that the player is not trying to place a piece on top of existing peice
+                if board_tile.unit != None {
+                    return false;
+                }
+
+                let unit_descriptor = units[*unit_kind].clone();
+
+                // Check that player could afford to build unit
+                if unit_descriptor.cost > player.gold {
+                    return false;
+                }
+
+                // Check that the faction is the same as the player
+                if unit_descriptor.faction != player.faction.to_string() {
+                    return false;
+                }
+
             }
             MoveUnit {
                 player_id,
-                at,
-                unit: _,
+                from,
+                to,
             } => {
                 // Check that player exists
                 if !self.players.contains_key(player_id) {
@@ -237,17 +253,40 @@ impl GameState {
                 }
 
                 // Check that the tile index is inside the board
-                if *at > MAP_SIZE {
+                if *from > MAP_SIZE || *to > MAP_SIZE {
                     return false;
                 }
 
-                // Check that the player is not trying to place a piece on top of existing peice
-                if self.board[*at].terrain != TerrainTile::Empty {
+                let player = self.players.get(player_id).unwrap();
+                let from_board_tile = self.board[*from];
+                let to_board_tile = self.board[*to];
+
+                // Check that it is valid to move to tile
+                let terrain_descriptor = terrain[to_board_tile.terrain].clone();
+                if terrain_descriptor.wall {
                     return false;
                 }
 
-                // TODO validate that the move was a valid move for the unit
-                // TODO validate that unit hasnt already taken action for this turn
+                if let Some(_unit_to_move) = from_board_tile.unit {
+                    // TODO Check to see if movement is within range
+                    //let from_tilepos = ;
+                    //let to_tilepos = ;
+                    //let path = get_hex_path(from_tilepos. to_tilepos);
+
+                    //if path.size() > unit_to_move.range_remaining {
+                    //}
+
+                    if let Some(unit_to_attack) = to_board_tile.unit {
+                        // Check that the player is not trying to place a piece on top of an allied
+                        let unit_to_attack_descriptor = units[unit_to_attack.kind].clone();
+                        if unit_to_attack_descriptor.faction == player.faction.to_string() {
+                            return false;
+                        }
+                    }
+                } else {
+                    // No unit to move
+                    return false;
+                }
             }
             EndTurn { player_id } => {
                 // Check that player exists
@@ -269,7 +308,13 @@ impl GameState {
     /// Consumes and event, modifying the GameState and adding the event to its history.
     /// NOTE: Consume assumes the event to have already been balidated and will accept any event
     /// passed to it
-    pub fn consume(&mut self, valid_event: &GameEvent) {
+    pub fn consume(
+        &mut self,
+        valid_event: &GameEvent,
+        _buildings: &Buildings,
+        units: &Units,
+        _terrain: &Terrain,
+    ) {
         use GameEvent::*;
         match valid_event {
             BeginGame { goes_first } => {
@@ -288,6 +333,7 @@ impl GameState {
                         } else {
                             Faction::Volcano
                         },
+                        gold: 0,
                     },
                 );
             }
@@ -295,20 +341,47 @@ impl GameState {
                 self.players.remove(player_id);
             }
             BuildUnit {
-                player_id: _,
-                at: _,
-                unit: _,
+                player_id,
+                at,
+                unit_kind,
             } => {
-                // TODO impliment actual build logic
-                //let piece = self.get_player_faction(player_id);
+                let x = (at % MAP_WIDTH) as u32;
+                let y = (at / MAP_HEIGHT) as u32;
+                let mut board_tile = self.board[*at];
+                board_tile.unit = Some(Unit::new(
+                        (x , y),
+                        *unit_kind,
+                        units,
+                ));
+
+                let unit_descriptor = &units[*unit_kind];
+                let mut player = self.players.get_mut(player_id).unwrap();
+                player.gold -= unit_descriptor.cost;
             }
             MoveUnit {
                 player_id: _,
-                at: _,
-                unit: _,
+                from,
+                to,
             } => {
-                // TODO impliment actual move logic
-                // let piece = self.get_player_faction(player_id);
+                let x = (to % MAP_WIDTH) as u32;
+                let y = (to / MAP_HEIGHT) as u32;
+                let mut from_unit = self.board[*from].unit.unwrap();
+                if let Some(mut to_unit) = self.board[*from].unit {
+                    let unit_descriptor = &units[from_unit.kind];
+                    to_unit.health -= unit_descriptor.damage;
+                    if to_unit.health <= 0 {
+                        from_unit.position = (x, y);
+                        self.board[*from].unit = None;
+                        self.board[*to].unit = Some(from_unit);
+                    } else {
+                        // TODO Handle case where enemy unit doesnt die
+                        // probably move to closest point along path to unit
+                    }
+                } else {
+                    from_unit.position = (x, y);
+                    self.board[*from].unit = None;
+                    self.board[*to].unit = Some(from_unit);
+                }
             }
             EndTurn { player_id } => {
                 // Switch which player is the active player
@@ -318,7 +391,7 @@ impl GameState {
                     .find(|id| *id != player_id)
                     .unwrap()
                     .clone();
-            }
+                }
         }
 
         self.histroy.push(valid_event.clone());
@@ -329,8 +402,8 @@ impl GameState {
         if self.volcano_has_been_plugged() {
             if let Some((dinosaur_player, _)) = self
                 .players
-                .iter()
-                .find(|(_, player)| player.faction == Faction::Dinosaur)
+                    .iter()
+                    .find(|(_, player)| player.faction == Faction::Dinosaur)
             {
                 return Some(*dinosaur_player);
             }
@@ -339,8 +412,8 @@ impl GameState {
         if self.all_dino_dead() && self.all_dino_villages_destroyed() {
             if let Some((volcano_player, _)) = self
                 .players
-                .iter()
-                .find(|(_, player)| player.faction == Faction::Volcano)
+                    .iter()
+                    .find(|(_, player)| player.faction == Faction::Volcano)
             {
                 return Some(*volcano_player);
             }

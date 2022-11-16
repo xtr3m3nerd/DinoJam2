@@ -9,6 +9,7 @@ use iyes_progress::prelude::*;
 use crate::asset_management::{asset_collections::*, HandleFromPath};
 use crate::states::AppState;
 use shared::asset_management::{terrain_descriptors::*, unit_descriptors::*};
+use shared::units::Units;
 
 pub struct AssetLoaderPlugin;
 

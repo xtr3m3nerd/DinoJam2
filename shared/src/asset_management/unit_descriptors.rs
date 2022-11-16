@@ -1,33 +1,7 @@
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct UnitKind(pub usize);
-
-/// This will be available as a resource
-///
-/// Contains all the unit descriptors loaded from asset files
-#[derive(Deref)]
-pub struct Units(pub Vec<UnitDescriptor>);
-
-impl std::ops::Index<UnitKind> for Units {
-    type Output = UnitDescriptor;
-    fn index(&self, index: UnitKind) -> &Self::Output {
-        &self.0[index.0]
-    }
-}
-
-#[derive(Debug, Clone, serde::Deserialize)]
-pub struct UnitDescriptor {
-    pub name: String,
-    // Name that can be shown to players
-    pub pub_name: String,
-    pub max_hp: u32,
-    pub move_range: u32,
-    pub attack_range: u32,
-    pub damage: u32,
-    pub sprite_idx: usize,
-}
+use crate::units::*;
 
 /// internal thingy to load all the asset files
 /// and accumulate them into a Units resource

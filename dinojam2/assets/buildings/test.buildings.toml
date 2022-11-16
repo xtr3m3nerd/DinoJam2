@@ -1,0 +1,13 @@
+[[building]]
+name = "Volcano"
+pub_name = "Volcano"
+max_hp = 8
+sprite_idx = 0
+faction = "Volcano"
+
+[[building]]
+name = "DinoVillage"
+pub_name = "Dino Village"
+max_hp = 4
+sprite_idx = 1
+faction = "Dinosaur"

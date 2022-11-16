@@ -1,4 +1,7 @@
 ({
+    "meta.buildings": Files (
+        paths: ["buildings/test.buildings.toml"],
+    ),
     "meta.units": Files (
         paths: ["units/test.units.toml"],
     ),

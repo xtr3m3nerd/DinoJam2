@@ -1,25 +1,7 @@
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 
-#[derive(Clone, Component, Copy, Debug, Eq, PartialEq)]
-pub struct TerrainKind(pub usize);
-
-#[derive(Deref)]
-pub struct Terrain(pub Vec<TerrainDescriptor>);
-
-impl std::ops::Index<TerrainKind> for Terrain {
-    type Output = TerrainDescriptor;
-    fn index(&self, index: TerrainKind) -> &Self::Output {
-        &self.0[index.0]
-    }
-}
-
-#[derive(Debug, Clone, serde::Deserialize)]
-pub struct TerrainDescriptor {
-    pub name: String,
-    pub sprite_idx: usize,
-    pub wall: bool,
-}
+use crate::terrain::*;
 
 #[derive(AssetCollection)]
 pub struct TerrainAssets {

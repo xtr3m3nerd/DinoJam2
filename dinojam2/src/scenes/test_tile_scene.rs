@@ -4,7 +4,7 @@ use bevy::{prelude::*, utils::HashMap};
 use bevy_ecs_tilemap::helpers::hex_grid::neighbors::HexDirection;
 use bevy_ecs_tilemap::prelude::*;
 use iyes_loopless::prelude::*;
-use shared::asset_management::terrain_descriptors::{Terrain, TerrainKind};
+use shared::terrain::{Terrain, TerrainKind};
 use shared::hex::neighbors::HexNeighbors;
 
 pub struct TestTileScenePlugin;
